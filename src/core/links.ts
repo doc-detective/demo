@@ -9,6 +9,8 @@ export interface CreateInput {
   title?: string;
   /** When true, use the local model (or fallback) to suggest slug + description. */
   ai?: boolean;
+  /** When true (with ai), allow downloading the default model if not cached. */
+  aiDownload?: boolean;
 }
 
 /** Validate and normalize a destination URL (http/https only). */
@@ -32,11 +34,12 @@ function normalizeUrl(raw: string): string {
 export async function createLink(store: JsonStore, input: CreateInput): Promise<Link> {
   const url = normalizeUrl(input.url);
 
-  let slug = input.slug;
+  // Treat an empty or whitespace-only slug as "not provided".
+  let slug = input.slug?.trim() ? input.slug.trim() : undefined;
   let description: string | undefined;
 
   if (input.ai) {
-    const enriched = await enrich(url);
+    const enriched = await enrich(url, { download: Boolean(input.aiDownload) });
     slug = slug ?? enriched.slug;
     description = enriched.description;
   }

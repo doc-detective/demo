@@ -62,6 +62,9 @@ async function main() {
     }
     process.exit(1);
   }
+
+  // Exit explicitly: loading the native model can crash on normal teardown.
+  process.exit(0);
 }
 
 main();

@@ -8,7 +8,7 @@ It exposes the same core functionality through three interfaces:
 - **REST API** — `/api/links`
 - **CLI** — `linkhq`
 
-All three import one shared core (`src/core/`), so the behavior you document for one interface holds for the others. An optional **local-model** feature (via [node-llama-cpp](https://github.com/withcatai/node-llama-cpp)) suggests memorable slugs and descriptions, with a deterministic fallback when no model is installed.
+All three import one shared core (`src/core/`), so the behavior you document for one interface holds for the others. An optional **local-model** feature suggests memorable slugs and descriptions, with a deterministic fallback when the model is unavailable. It uses [Qwen3.5 0.8B](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) (4-bit), downloaded and managed by [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) — pre-fetch it with `npm run model:pull`.
 
 > This is a proof of concept, not a production product. No auth, JSON-file storage, minimal features.
 

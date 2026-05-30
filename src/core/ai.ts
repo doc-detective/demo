@@ -11,7 +11,25 @@ export interface Enrichment {
   source: "model" | "fallback";
 }
 
+export interface EnrichOptions {
+  /** Allow downloading the default model if it isn't present yet. */
+  download?: boolean;
+}
+
 const MAX_DESCRIPTION = 120;
+
+/**
+ * Opinionated default model: Qwen3.5 0.8B, 4-bit (Q4_K_M) quantization,
+ * from unsloth's GGUF release. Downloaded and managed by node-llama-cpp.
+ * Override with LINKHQ_MODEL_URI, or point LINKHQ_MODEL at a local .gguf.
+ */
+export const DEFAULT_MODEL_URI =
+  process.env.LINKHQ_MODEL_URI ?? "hf:unsloth/Qwen3.5-0.8B-GGUF:Q4_K_M";
+
+/** Directory where the model is cached (override with LINKHQ_MODELS_DIR). */
+export function modelsDir(): string {
+  return process.env.LINKHQ_MODELS_DIR ?? path.join(process.cwd(), "models");
+}
 
 /** Hostname helper that never throws. */
 function safeHost(url: string): string {
@@ -32,21 +50,6 @@ export function fallbackEnrich(url: string): Enrichment {
   };
 }
 
-/** Resolve a GGUF model path from env or the local models/ directory. */
-function findModelPath(): string | undefined {
-  if (process.env.LINKHQ_MODEL && fs.existsSync(process.env.LINKHQ_MODEL)) {
-    return process.env.LINKHQ_MODEL;
-  }
-  const modelsDir = path.join(process.cwd(), "models");
-  try {
-    const gguf = fs.readdirSync(modelsDir).find((f) => f.endsWith(".gguf"));
-    if (gguf) return path.join(modelsDir, gguf);
-  } catch {
-    /* no models dir */
-  }
-  return undefined;
-}
-
 /** Sanitize raw model output into a valid slug, falling back to random. */
 function coerceSlug(raw: string): string {
   const cleaned = raw
@@ -58,42 +61,106 @@ function coerceSlug(raw: string): string {
   return isValidSlug(cleaned) ? cleaned : randomSlug();
 }
 
+function clampDescription(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ").slice(0, MAX_DESCRIPTION);
+}
+
+/**
+ * Resolve the default model to a local file path, downloading it via
+ * node-llama-cpp when `download` is true and it isn't cached yet. Returns
+ * undefined (so callers can fall back) if the model is unavailable.
+ */
+async function resolveModelPath(download: boolean): Promise<string | undefined> {
+  // Escape hatch used by unit tests to force the deterministic fallback.
+  if (process.env.LINKHQ_DISABLE_MODEL) return undefined;
+
+  const explicit = process.env.LINKHQ_MODEL;
+  if (explicit) return fs.existsSync(explicit) ? explicit : undefined;
+
+  try {
+    const { resolveModelFile } = await import("node-llama-cpp");
+    const resolved = await resolveModelFile(DEFAULT_MODEL_URI, {
+      directory: modelsDir(),
+      download: download ? "auto" : false,
+      cli: false,
+    });
+    return resolved && fs.existsSync(resolved) ? resolved : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// Cache a single loaded model + chat session per process. We deliberately
+// never dispose the native context — disposing mid-process can crash the
+// llama.cpp backend on some platforms, and reusing one session (reset between
+// prompts) avoids reloading the ~0.5 GB model on every request.
+let loadedSession: Promise<import("node-llama-cpp").LlamaChatSession> | null = null;
+
+async function getSession(
+  modelPath: string
+): Promise<import("node-llama-cpp").LlamaChatSession> {
+  if (!loadedSession) {
+    loadedSession = (async () => {
+      const { getLlama, LlamaChatSession } = await import("node-llama-cpp");
+      const llama = await getLlama();
+      const model = await llama.loadModel({ modelPath });
+      const context = await model.createContext({ contextSize: 4096 });
+      return new LlamaChatSession({
+        contextSequence: context.getSequence(),
+        systemPrompt:
+          "You are a concise assistant. Reply with only what is asked, with no preamble or explanation.",
+      });
+    })();
+  }
+  return loadedSession;
+}
+
+/**
+ * Download (or locate) the default model, showing CLI progress. Used by
+ * `linkhq model pull`. Returns the local model path.
+ */
+export async function pullModel(): Promise<string> {
+  const explicit = process.env.LINKHQ_MODEL;
+  if (explicit && fs.existsSync(explicit)) return explicit;
+  const { resolveModelFile } = await import("node-llama-cpp");
+  return resolveModelFile(DEFAULT_MODEL_URI, {
+    directory: modelsDir(),
+    download: "auto",
+    cli: true,
+  });
+}
+
 /**
  * Enrich a URL with a memorable slug + description.
  *
- * Tries a local GGUF model via node-llama-cpp (lazy-loaded, optional). On any
- * failure — no model file, missing native dependency, or model error — it
- * returns the deterministic fallback so the app always works offline.
+ * Uses the local Qwen3.5 0.8B model via node-llama-cpp. On any failure — no
+ * model, missing native binary, or model error — it returns the deterministic
+ * fallback so the app always works offline. Set `download: true` to fetch the
+ * model on first use.
  */
-export async function enrich(url: string): Promise<Enrichment> {
-  const modelPath = findModelPath();
+export async function enrich(url: string, opts: EnrichOptions = {}): Promise<Enrichment> {
+  const modelPath = await resolveModelPath(Boolean(opts.download));
   if (!modelPath) return fallbackEnrich(url);
 
   try {
-    // Lazy, optional import: never a hard dependency.
-    const llama = await import("node-llama-cpp");
-    const { getLlama, LlamaChatSession } = llama as typeof import("node-llama-cpp");
-    const engine = await getLlama();
-    const model = await engine.loadModel({ modelPath });
-    const context = await model.createContext();
-    const session = new LlamaChatSession({
-      contextSequence: context.getSequence(),
-    });
-
+    const session = await getSession(modelPath);
     const host = safeHost(url);
+
+    session.resetChatHistory();
     const slugRaw = await session.prompt(
-      `Suggest a short, memorable, lowercase, hyphenated slug (2-3 words) for a link to ${url}. Reply with only the slug.`
-    );
-    const descRaw = await session.prompt(
-      `In one short sentence (max 15 words), describe a link to ${host}. Reply with only the sentence.`
+      `Suggest a short, memorable, lowercase, hyphenated slug (2-3 words) for a link to ${url}. Reply with only the slug, nothing else.`,
+      { maxTokens: 200, temperature: 0.7 }
     );
 
-    await context.dispose();
-    await model.dispose();
+    session.resetChatHistory();
+    const descRaw = await session.prompt(
+      `In one short sentence (max 15 words), describe a link to ${host}. Reply with only the sentence.`,
+      { maxTokens: 256, temperature: 0.7 }
+    );
 
     return {
       slug: coerceSlug(slugRaw),
-      description: descRaw.trim().replace(/\s+/g, " ").slice(0, MAX_DESCRIPTION),
+      description: clampDescription(descRaw) || `Link to ${host}`,
       source: "model",
     };
   } catch {

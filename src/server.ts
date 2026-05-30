@@ -31,7 +31,13 @@ app.get("/api/links", (_req, res) => {
 app.post("/api/links", async (req, res) => {
   try {
     const { url, slug, title, ai } = req.body ?? {};
-    const link = await createLink(store, { url, slug, title, ai: Boolean(ai) });
+    const link = await createLink(store, {
+      url,
+      slug,
+      title,
+      ai: Boolean(ai),
+      aiDownload: Boolean(ai),
+    });
     res.status(201).json(link);
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
