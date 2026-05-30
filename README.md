@@ -56,7 +56,7 @@ See [docs/getting-started.md](docs/getting-started.md) to begin.
 - type-check (`tsc --noEmit`), unit tests (Vitest), and the Doc Detective specs (API, CLI, inline doc, AI eval) on all three OSes
 - the browser-based UI spec on Ubuntu (with headless Chrome)
 
-CI installs with `--omit=optional`, so the native `node-llama-cpp` model dependency is skipped and the AI feature exercises its deterministic fallback — the suite needs no model download.
+CI sets `LINKHQ_DISABLE_MODEL=1`, so the AI feature exercises its deterministic fallback and the ~0.5 GB model is never downloaded (the model is only fetched at runtime, never during install or tests).
 
 ## Platform support
 

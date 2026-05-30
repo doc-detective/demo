@@ -1,16 +1,23 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { randomSlug, isValidSlug } from "../../src/core/slug.js";
 
 describe("randomSlug", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("produces a valid slug of the requested length", () => {
     const s = randomSlug(6);
     expect(s).toHaveLength(6);
     expect(isValidSlug(s)).toBe(true);
   });
 
-  it("produces different slugs on repeated calls (overwhelmingly likely)", () => {
-    const set = new Set(Array.from({ length: 50 }, () => randomSlug()));
-    expect(set.size).toBeGreaterThan(45);
+  it("maps the random source onto the slug alphabet deterministically", () => {
+    // Alphabet is "a-z0-9" (36 chars): 0 -> "a", 0.5 -> "s", 0.999 -> "9".
+    const sequence = [0, 0.5, 0.999];
+    let i = 0;
+    vi.spyOn(Math, "random").mockImplementation(() => sequence[i++ % sequence.length]);
+    expect(randomSlug(3)).toBe("as9");
   });
 });
 

@@ -11,7 +11,8 @@ concurrency:
 
 env:
   # CI never uses the ~0.5 GB local model; the AI feature exercises its
-  # deterministic fallback instead. (node-llama-cpp is also omitted below.)
+  # deterministic fallback instead. The model file is only fetched at runtime
+  # (never during install or tests), so it is never downloaded in CI.
   LINKHQ_DISABLE_MODEL: "1"
 
 jobs:
@@ -30,10 +31,8 @@ jobs:
           node-version: 20
           cache: npm
 
-      # Skip the optional native model dependency (node-llama-cpp) — it isn't
-      # needed for the test suite and keeps installs fast and portable.
       - name: Install dependencies
-        run: npm ci --omit=optional
+        run: npm ci
 
       - name: Type-check
         run: npx tsc -p tsconfig.json --noEmit
@@ -59,7 +58,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --omit=optional
+        run: npm ci
 
       # Doc Detective lazily installs its runtime + browsers. Install just
       # Chrome (headless) + chromedriver for the UI spec.

@@ -110,7 +110,7 @@ let loadedSession: Promise<ChatSessionLike> | null = null;
 
 async function getSession(modelPath: string): Promise<ChatSessionLike> {
   if (!loadedSession) {
-    loadedSession = (async () => {
+    const sessionPromise = (async () => {
       // @ts-ignore optional native dependency, resolved lazily at runtime
       const nlc = await import("node-llama-cpp");
       const { getLlama, LlamaChatSession, QwenChatWrapper, resolveChatWrapper } = nlc;
@@ -134,6 +134,12 @@ async function getSession(modelPath: string): Promise<ChatSessionLike> {
           "You are a concise assistant. Reply with only what is asked, with no preamble or explanation.",
       });
     })();
+    // Don't cache a rejected promise — a transient load failure should not
+    // poison every future call. Clear the cache so a later call can retry.
+    sessionPromise.catch(() => {
+      if (loadedSession === sessionPromise) loadedSession = null;
+    });
+    loadedSession = sessionPromise;
   }
   return loadedSession;
 }

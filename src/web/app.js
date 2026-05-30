@@ -9,7 +9,7 @@ async function loadLinks() {
     const tr = document.createElement("tr");
     tr.setAttribute("data-slug", link.slug);
     tr.innerHTML = `
-      <td><a class="short" href="/${link.slug}" target="_blank">/${link.slug}</a></td>
+      <td><a class="short" href="/${link.slug}" target="_blank" rel="noopener noreferrer">/${link.slug}</a></td>
       <td class="dest">${escapeHtml(link.url)}</td>
       <td class="desc">${escapeHtml(link.description || "")}</td>
       <td class="clicks">${link.clicks}</td>
