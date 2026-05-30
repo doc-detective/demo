@@ -12,6 +12,8 @@ LinkHQ ships with one opinionated default model:
 
 The model is downloaded and managed by [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) and cached in the project's `models/` directory.
 
+Qwen3.5 is a reasoning model, but LinkHQ runs it in **non-thinking mode** (`thoughts: "discourage"`) for these short, single-shot prompts — so enrichment answers directly and quickly instead of spending tokens on chain-of-thought.
+
 ## How it behaves
 
 When you ask for AI enrichment (the **Use AI** checkbox, `"ai": true` in the API, or `--ai` on the CLI):

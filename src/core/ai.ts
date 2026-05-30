@@ -101,12 +101,24 @@ async function getSession(
 ): Promise<import("node-llama-cpp").LlamaChatSession> {
   if (!loadedSession) {
     loadedSession = (async () => {
-      const { getLlama, LlamaChatSession } = await import("node-llama-cpp");
+      const { getLlama, LlamaChatSession, QwenChatWrapper, resolveChatWrapper } =
+        await import("node-llama-cpp");
       const llama = await getLlama();
       const model = await llama.loadModel({ modelPath });
       const context = await model.createContext({ contextSize: 4096 });
+
+      // Qwen3.x is a reasoning model. For short, fast, single-shot enrichment
+      // we discourage chain-of-thought so it answers directly. Falls back to
+      // the auto-resolved wrapper for any non-Qwen override model.
+      const auto = resolveChatWrapper(model);
+      const chatWrapper =
+        auto instanceof QwenChatWrapper
+          ? new QwenChatWrapper({ variation: auto.variation, thoughts: "discourage" })
+          : auto ?? undefined;
+
       return new LlamaChatSession({
         contextSequence: context.getSequence(),
+        chatWrapper,
         systemPrompt:
           "You are a concise assistant. Reply with only what is asked, with no preamble or explanation.",
       });
@@ -149,13 +161,13 @@ export async function enrich(url: string, opts: EnrichOptions = {}): Promise<Enr
     session.resetChatHistory();
     const slugRaw = await session.prompt(
       `Suggest a short, memorable, lowercase, hyphenated slug (2-3 words) for a link to ${url}. Reply with only the slug, nothing else.`,
-      { maxTokens: 200, temperature: 0.7 }
+      { maxTokens: 48, temperature: 0.7 }
     );
 
     session.resetChatHistory();
     const descRaw = await session.prompt(
       `In one short sentence (max 15 words), describe a link to ${host}. Reply with only the sentence.`,
-      { maxTokens: 256, temperature: 0.7 }
+      { maxTokens: 96, temperature: 0.7 }
     );
 
     return {
