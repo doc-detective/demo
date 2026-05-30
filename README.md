@@ -48,3 +48,16 @@ npx tsx tests/eval/ai-eval.ts  # probabilistic AI eval
 ```
 
 See [docs/getting-started.md](docs/getting-started.md) to begin.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request across **Ubuntu, macOS, and Windows**:
+
+- type-check (`tsc --noEmit`), unit tests (Vitest), and the Doc Detective specs (API, CLI, inline doc, AI eval) on all three OSes
+- the browser-based UI spec on Ubuntu (with headless Chrome)
+
+CI installs with `--omit=optional`, so the native `node-llama-cpp` model dependency is skipped and the AI feature exercises its deterministic fallback — the suite needs no model download.
+
+## Platform support
+
+The app, CLI, and tests are pure TypeScript and run anywhere Node 20+ runs. The optional AI model uses `node-llama-cpp`, which ships prebuilt binaries for Linux/macOS/Windows (x64 and arm64); if a prebuilt isn't available it's skipped and the deterministic fallback is used.

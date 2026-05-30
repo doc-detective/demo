@@ -78,6 +78,7 @@ async function resolveModelPath(download: boolean): Promise<string | undefined> 
   if (explicit) return fs.existsSync(explicit) ? explicit : undefined;
 
   try {
+    // @ts-ignore optional native dependency, resolved lazily at runtime
     const { resolveModelFile } = await import("node-llama-cpp");
     const resolved = await resolveModelFile(DEFAULT_MODEL_URI, {
       directory: modelsDir(),
@@ -90,19 +91,29 @@ async function resolveModelPath(download: boolean): Promise<string | undefined> 
   }
 }
 
+// Minimal shape we use from a node-llama-cpp chat session. Declaring it locally
+// keeps this module's types independent of the optional native dependency, so
+// the project type-checks even when node-llama-cpp isn't installed (e.g. CI).
+interface ChatSessionLike {
+  prompt(
+    text: string,
+    options?: { maxTokens?: number; temperature?: number }
+  ): Promise<string>;
+  resetChatHistory(): void;
+}
+
 // Cache a single loaded model + chat session per process. We deliberately
 // never dispose the native context — disposing mid-process can crash the
 // llama.cpp backend on some platforms, and reusing one session (reset between
 // prompts) avoids reloading the ~0.5 GB model on every request.
-let loadedSession: Promise<import("node-llama-cpp").LlamaChatSession> | null = null;
+let loadedSession: Promise<ChatSessionLike> | null = null;
 
-async function getSession(
-  modelPath: string
-): Promise<import("node-llama-cpp").LlamaChatSession> {
+async function getSession(modelPath: string): Promise<ChatSessionLike> {
   if (!loadedSession) {
     loadedSession = (async () => {
-      const { getLlama, LlamaChatSession, QwenChatWrapper, resolveChatWrapper } =
-        await import("node-llama-cpp");
+      // @ts-ignore optional native dependency, resolved lazily at runtime
+      const nlc = await import("node-llama-cpp");
+      const { getLlama, LlamaChatSession, QwenChatWrapper, resolveChatWrapper } = nlc;
       const llama = await getLlama();
       const model = await llama.loadModel({ modelPath });
       const context = await model.createContext({ contextSize: 4096 });
@@ -134,6 +145,7 @@ async function getSession(
 export async function pullModel(): Promise<string> {
   const explicit = process.env.LINKHQ_MODEL;
   if (explicit && fs.existsSync(explicit)) return explicit;
+  // @ts-ignore optional native dependency, resolved lazily at runtime
   const { resolveModelFile } = await import("node-llama-cpp");
   return resolveModelFile(DEFAULT_MODEL_URI, {
     directory: modelsDir(),
