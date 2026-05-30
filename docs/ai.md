@@ -20,7 +20,7 @@ When you ask for AI enrichment (the **Use AI** checkbox, `"ai": true` in the API
 
 - **The first time**, LinkHQ downloads the default model (a few hundred MB), then prompts it for a slug and description.
 - **Afterwards**, the cached model is reused.
-- **If the model can't be loaded** (offline before the first download, or no native support), LinkHQ falls back to a deterministic random slug and a templated description (`Link to <host>`).
+- **If the model can't be loaded** (offline before the first download, or no native support), LinkHQ falls back to a random slug and a templated description (`Link to <host>`) — no model required.
 
 Either way you get a valid slug and a non-empty description, so the app always works offline. AI is strictly an opt-in upgrade.
 
@@ -79,4 +79,4 @@ Run the probabilistic eval:
 npx tsx tests/eval/ai-eval.ts
 ```
 
-It runs several enrichments and reports how many passed the structural checks. The eval is also wrapped as a Doc Detective spec at `tests/doc-detective/ai-eval.spec.json`. With no model installed it validates the deterministic fallback; with a model installed it validates real model output.
+It runs several enrichments and reports how many passed the structural checks. The eval is also wrapped as a Doc Detective spec at `tests/doc-detective/ai-eval.spec.json`. With no model installed it validates the model-free fallback; with a model installed it validates real model output.

@@ -71,7 +71,7 @@ function clampDescription(raw: string): string {
  * undefined (so callers can fall back) if the model is unavailable.
  */
 async function resolveModelPath(download: boolean): Promise<string | undefined> {
-  // Escape hatch used by unit tests to force the deterministic fallback.
+  // Escape hatch used by unit tests to force the model-free fallback.
   if (process.env.LINKHQ_DISABLE_MODEL) return undefined;
 
   const explicit = process.env.LINKHQ_MODEL;

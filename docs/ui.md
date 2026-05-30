@@ -26,6 +26,6 @@ In the **Links** table, select **Delete** in the row for the link you want to re
 | --- | --- | --- |
 | Destination URL | Yes | Must start with `http://` or `https://`. |
 | Custom slug | No | Lowercase letters, digits, and hyphens; up to 40 characters. |
-| Use AI | No | Suggests a slug and description from a local model, or a deterministic fallback. |
+| Use AI | No | Suggests a slug and description from a local model, or a model-free fallback (random slug + templated description). |
 
 The end-to-end UI procedure above is validated by `tests/doc-detective/ui.spec.json`.

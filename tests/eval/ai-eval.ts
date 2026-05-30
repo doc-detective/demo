@@ -8,7 +8,7 @@
  *   - the description is non-empty and <= 120 characters
  *
  * It runs against the local model when one is installed (LINKHQ_MODEL or
- * models/*.gguf) and otherwise against the deterministic fallback, so it
+ * models/*.gguf) and otherwise against the model-free fallback, so it
  * always produces a result. Exit code is non-zero only if a structural
  * property is violated.
  */
@@ -53,7 +53,7 @@ async function main() {
   console.log(
     usingModel
       ? "Source: local model (node-llama-cpp)"
-      : "Source: deterministic fallback (no GGUF model installed) — structure still validated"
+      : "Source: model-free fallback (no GGUF model installed) — structure still validated"
   );
 
   if (passed !== total) {

@@ -36,7 +36,10 @@ app.post("/api/links", async (req, res) => {
       slug,
       title,
       ai: Boolean(ai),
-      aiDownload: Boolean(ai),
+      // The server never auto-downloads the ~0.5 GB model in response to a
+      // request — it uses the model only if pre-pulled (`linkhq model pull`),
+      // otherwise the fallback. Downloads are a deliberate CLI-side action.
+      aiDownload: false,
     });
     res.status(201).json(link);
   } catch (err) {
@@ -59,7 +62,12 @@ app.delete("/api/links/:slug", (req, res) => {
 });
 
 // Reset the store to the checked-in seed (for repeatable doc tests).
+// This is a deliberate test/demo affordance and is disabled in production.
 app.post("/api/reset", (_req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    res.status(403).json({ error: "Reset is disabled in production" });
+    return;
+  }
   const seedPath = path.join(process.cwd(), "data", "seed.json");
   let seed: Link[] = [];
   try {

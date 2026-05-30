@@ -28,6 +28,21 @@ function normalizeUrl(raw: string): string {
 }
 
 /**
+ * Choose a free slug for an auto-generated link: use the AI suggestion if it's
+ * valid and available, otherwise retry random slugs until one is free.
+ */
+function pickAvailableSlug(store: JsonStore, preferred?: string): string {
+  if (preferred && isValidSlug(preferred) && !store.get(preferred)) {
+    return preferred;
+  }
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = randomSlug();
+    if (!store.get(candidate)) return candidate;
+  }
+  throw new Error("Could not generate a unique slug");
+}
+
+/**
  * Create a shortened link. Slug precedence: explicit > AI suggestion > random.
  * This is the single shared entry point used by the API server and the CLI.
  */
@@ -35,21 +50,29 @@ export async function createLink(store: JsonStore, input: CreateInput): Promise<
   const url = normalizeUrl(input.url);
 
   // Treat an empty or whitespace-only slug as "not provided".
-  let slug = input.slug?.trim() ? input.slug.trim() : undefined;
+  const explicitSlug = input.slug?.trim() ? input.slug.trim() : undefined;
+  let aiSlug: string | undefined;
   let description: string | undefined;
 
   if (input.ai) {
     const enriched = await enrich(url, { download: Boolean(input.aiDownload) });
-    slug = slug ?? enriched.slug;
+    aiSlug = enriched.slug;
     description = enriched.description;
   }
 
-  slug = slug ?? randomSlug();
-  if (!isValidSlug(slug)) {
-    throw new Error(`Invalid slug: ${slug}`);
-  }
-  if (store.get(slug)) {
-    throw new Error(`Slug already exists: ${slug}`);
+  let slug: string;
+  if (explicitSlug) {
+    // An explicitly requested slug must be valid and free — never silently changed.
+    if (!isValidSlug(explicitSlug)) {
+      throw new Error(`Invalid slug: ${explicitSlug}`);
+    }
+    if (store.get(explicitSlug)) {
+      throw new Error(`Slug already exists: ${explicitSlug}`);
+    }
+    slug = explicitSlug;
+  } else {
+    // Otherwise prefer a free AI suggestion, then retry random slugs on collision.
+    slug = pickAvailableSlug(store, aiSlug);
   }
 
   const link: Link = {

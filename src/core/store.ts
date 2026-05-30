@@ -10,11 +10,16 @@ export class JsonStore {
   constructor(private readonly filePath: string) {}
 
   private read(): Link[] {
+    let raw: string;
     try {
-      return JSON.parse(fs.readFileSync(this.filePath, "utf8")) as Link[];
-    } catch {
-      return [];
+      raw = fs.readFileSync(this.filePath, "utf8");
+    } catch (err) {
+      // Only a missing file means "no links yet". Surface anything else
+      // (malformed JSON, permission errors) so we never silently overwrite.
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+      throw err;
     }
+    return JSON.parse(raw) as Link[];
   }
 
   private write(links: Link[]): void {

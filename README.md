@@ -8,7 +8,7 @@ It exposes the same core functionality through three interfaces:
 - **REST API** — `/api/links`
 - **CLI** — `linkhq`
 
-All three import one shared core (`src/core/`), so the behavior you document for one interface holds for the others. An optional **local-model** feature suggests memorable slugs and descriptions, with a deterministic fallback when the model is unavailable. It uses [Qwen3.5 0.8B](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) (4-bit), downloaded and managed by [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) — pre-fetch it with `npm run model:pull`.
+All three import one shared core (`src/core/`), so the behavior you document for one interface holds for the others. An optional **local-model** feature suggests memorable slugs and descriptions, with a model-free fallback (random slug + templated description) when the model is unavailable. It uses [Qwen3.5 0.8B](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) (4-bit), downloaded and managed by [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) — pre-fetch it with `npm run model:pull`.
 
 > This is a proof of concept, not a production product. No auth, JSON-file storage, minimal features.
 
@@ -56,8 +56,8 @@ See [docs/getting-started.md](docs/getting-started.md) to begin.
 - type-check (`tsc --noEmit`), unit tests (Vitest), and the Doc Detective specs (API, CLI, inline doc, AI eval) on all three OSes
 - the browser-based UI spec on Ubuntu (with headless Chrome)
 
-CI sets `LINKHQ_DISABLE_MODEL=1`, so the AI feature exercises its deterministic fallback and the ~0.5 GB model is never downloaded (the model is only fetched at runtime, never during install or tests).
+CI sets `LINKHQ_DISABLE_MODEL=1`, so the AI feature exercises its model-free fallback and the ~0.5 GB model is never downloaded (the model is only fetched at runtime, never during install or tests).
 
 ## Platform support
 
-The app, CLI, and tests are pure TypeScript and run anywhere Node 20+ runs. The optional AI model uses `node-llama-cpp`, which ships prebuilt binaries for Linux/macOS/Windows (x64 and arm64); if a prebuilt isn't available it's skipped and the deterministic fallback is used.
+The app, CLI, and tests are pure TypeScript and run anywhere Node 20+ runs. The optional AI model uses `node-llama-cpp`, which ships prebuilt binaries for Linux/macOS/Windows (x64 and arm64); if a prebuilt isn't available it's skipped and the model-free fallback is used.
