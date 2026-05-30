@@ -1,0 +1,33 @@
+{
+  "name": "linkhq-ts",
+  "version": "0.1.0",
+  "description": "Minimal TypeScript URL shortener demo for Doc Detective / Docs as Tests",
+  "type": "module",
+  "bin": {
+    "linkhq": "./dist/cli.js"
+  },
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "cli": "tsx src/cli.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "docs:test": "doc-detective --config .doc-detective.json"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "express": "^4.21.2"
+  },
+  "optionalDependencies": {
+    "node-llama-cpp": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "license": "MIT"
+}

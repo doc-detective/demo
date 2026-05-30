@@ -1,0 +1,52 @@
+{
+  "tests": [
+    {
+      "testId": "api-crud",
+      "description": "Create, read, and delete a link through the REST API.",
+      "steps": [
+        {
+          "description": "Reset to a known state.",
+          "httpRequest": {
+            "method": "post",
+            "url": "http://localhost:3000/api/reset",
+            "statusCodes": [200]
+          }
+        },
+        {
+          "description": "Create a link.",
+          "httpRequest": {
+            "method": "post",
+            "url": "http://localhost:3000/api/links",
+            "request": {
+              "body": { "url": "https://example.com", "slug": "api-demo" }
+            },
+            "response": {
+              "body": { "slug": "api-demo", "clicks": 0 }
+            },
+            "statusCodes": [201]
+          }
+        },
+        {
+          "description": "Retrieve the link by slug.",
+          "httpRequest": {
+            "method": "get",
+            "url": "http://localhost:3000/api/links/api-demo",
+            "response": {
+              "body": { "slug": "api-demo", "url": "https://example.com/" }
+            },
+            "statusCodes": [200]
+          }
+        },
+        {
+          "description": "Delete the link.",
+          "httpRequest": {
+            "method": "delete",
+            "url": "http://localhost:3000/api/links/api-demo",
+            "statusCodes": [204],
+            "response": { "body": "" }
+          }
+        }
+      ]
+    }
+  ]
+}

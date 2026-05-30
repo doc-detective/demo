@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "testId": "ai-enrichment-eval",
+      "description": "Probabilistic eval: AI-suggested slugs and descriptions meet structural properties.",
+      "steps": [
+        {
+          "description": "Run the AI enrichment eval and confirm all structural checks pass.",
+          "runShell": {
+            "command": "npx tsx tests/eval/ai-eval.ts",
+            "stdio": "structural checks passed"
+          }
+        }
+      ]
+    }
+  ]
+}

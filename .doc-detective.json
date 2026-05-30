@@ -1,0 +1,56 @@
+{
+  "input": ["tests/doc-detective", "docs"],
+  "recursive": true,
+  "logLevel": "info",
+  "runOn": [
+    {
+      "platforms": ["windows", "mac", "linux"],
+      "browsers": [
+        {
+          "name": "chrome",
+          "headless": true
+        }
+      ]
+    }
+  ],
+  "fileTypes": [
+    {
+      "name": "markdown",
+      "extensions": ["md", "markdown", "mdx"],
+      "inlineStatements": {
+        "testStart": [
+          "{\\/\\*\\s*test\\s+?([\\s\\S]*?)\\s*\\*\\/}",
+          "<!--\\s*test\\s*([\\s\\S]*?)\\s*-->",
+          "\\[comment\\]:\\s+#\\s+\\(test\\s*(.*?)\\s*\\)",
+          "\\[comment\\]:\\s+#\\s+\\(test start\\s*(.*?)\\s*\\)"
+        ],
+        "testEnd": [
+          "{\\/\\*\\s*test end\\s*\\*\\/}",
+          "<!--\\s*test end\\s*([\\s\\S]*?)\\s*-->",
+          "\\[comment\\]:\\s+#\\s+\\(test end\\)"
+        ],
+        "step": [
+          "{\\/\\*\\s*step\\s+?([\\s\\S]*?)\\s*\\*\\/}",
+          "<!--\\s*step\\s*([\\s\\S]*?)\\s*-->",
+          "\\[comment\\]:\\s+#\\s+\\(step\\s*(.*?)\\s*\\)"
+        ]
+      },
+      "markup": [
+        {
+          "name": "checkHyperlink",
+          "regex": [
+            "(?<!\\!)\\[[^\\]]+\\]\\(\\s*(https?:\\/\\/[^\\s)]+)(?:\\s+\"[^\"]*\")?\\s*\\)"
+          ],
+          "actions": ["checkLink"]
+        },
+        {
+          "name": "goToUrl",
+          "regex": [
+            "\\b(?:[Gg]o\\s+to|[Oo]pen|[Nn]avigate\\s+to|[Vv]isit)\\b\\s+\\[[^\\]]+\\]\\(\\s*(https?:\\/\\/[^\\s)]+)(?:\\s+\"[^\"]*\")?\\s*\\)"
+          ],
+          "actions": ["goTo"]
+        }
+      ]
+    }
+  ]
+}

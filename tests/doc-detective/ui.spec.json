@@ -1,0 +1,63 @@
+{
+  "tests": [
+    {
+      "testId": "ui-create-link",
+      "description": "Create a link through the web UI and see it in the table.",
+      "steps": [
+        {
+          "description": "Reset to a known state before loading the page.",
+          "httpRequest": {
+            "method": "post",
+            "url": "http://localhost:3000/api/reset",
+            "statusCodes": [200]
+          }
+        },
+        {
+          "description": "Open the LinkHQ home page.",
+          "goTo": { "url": "http://localhost:3000" }
+        },
+        {
+          "description": "The page shows the LinkHQ heading.",
+          "find": { "elementText": "LinkHQ" }
+        },
+        {
+          "description": "Enter the destination URL.",
+          "find": {
+            "selector": "#url",
+            "click": true,
+            "type": { "keys": ["https://example.com"] }
+          }
+        },
+        {
+          "description": "Enter a custom slug.",
+          "find": {
+            "selector": "#slug",
+            "click": true,
+            "type": { "keys": ["ui-demo"] }
+          }
+        },
+        {
+          "description": "Submit the form.",
+          "find": { "selector": "#create-btn", "click": true }
+        },
+        {
+          "description": "The new link appears in the table.",
+          "find": { "selector": "[data-slug='ui-demo'] .short", "timeout": 5000 }
+        },
+        {
+          "description": "Capture the result.",
+          "screenshot": { "path": "ui-create-link.png" }
+        },
+        {
+          "description": "Clean up the created link.",
+          "httpRequest": {
+            "method": "delete",
+            "url": "http://localhost:3000/api/links/ui-demo",
+            "statusCodes": [204],
+            "response": { "body": "" }
+          }
+        }
+      ]
+    }
+  ]
+}
