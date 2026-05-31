@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "testId": "cli-create-and-list",
+      "description": "Create and list links with the CLI (shares the same store as the API).",
+      "steps": [
+        {
+          "description": "Reset to a known state.",
+          "runShell": {
+            "command": "npx tsx src/cli.ts reset",
+            "stdio": "Reset store"
+          }
+        },
+        {
+          "description": "Create a link.",
+          "runShell": {
+            "command": "npx tsx src/cli.ts create https://example.com --slug cli-demo",
+            "stdio": "Created /cli-demo"
+          }
+        },
+        {
+          "description": "List links and see the new slug.",
+          "runShell": {
+            "command": "npx tsx src/cli.ts list",
+            "stdio": "/cli-demo"
+          }
+        },
+        {
+          "description": "Delete the link.",
+          "runShell": {
+            "command": "npx tsx src/cli.ts delete cli-demo",
+            "stdio": "Deleted /cli-demo"
+          }
+        }
+      ]
+    }
+  ]
+}

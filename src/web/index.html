@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LinkHQ-TS</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1 id="title">LinkHQ</h1>
+      <p class="tagline">A tiny URL shortener — UI, API, and CLI over one shared core.</p>
+
+      <form id="create-form" autocomplete="off">
+        <label>
+          Destination URL
+          <input id="url" name="url" type="text" placeholder="https://example.com" required />
+        </label>
+        <label>
+          Custom slug <span class="muted">(optional)</span>
+          <input id="slug" name="slug" type="text" placeholder="my-link" />
+        </label>
+        <label class="checkbox">
+          <input id="ai" name="ai" type="checkbox" />
+          Use AI to suggest a slug &amp; description
+        </label>
+        <button id="create-btn" type="submit">Create Link</button>
+      </form>
+
+      <p id="message" role="status"></p>
+
+      <h2>Links</h2>
+      <table id="links-table">
+        <thead>
+          <tr>
+            <th>Short</th>
+            <th>Destination</th>
+            <th>Description</th>
+            <th>Clicks</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="links-body"></tbody>
+      </table>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
